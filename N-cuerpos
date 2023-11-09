@@ -1,0 +1,514 @@
+import math
+import numpy as np
+import matplotlib.pyplot as plt
+
+xi = 26.74 #UA
+yi = 0
+vxi = 0
+vyi = 0.105403 #UA/años
+ti = 0
+tf=100
+n=200000
+M=1
+G= 4*(np.pi**2)
+GM =G*M
+
+'''
+Función que calcula la aceleración, recibe como parámetro un array con las posiciones
+en x y en y del cometa
+'''
+def accel(posarray):
+  r = np.sqrt(posarray.dot(posarray))
+  return - GM*posarray/r**3s
+
+'''
+Método Runge-Kutta de orden 4:
+Función que recibe como parámetros:
+- ti: tiempo inicial
+- tf: el tiempo final
+- n: número de pasos
+- state: array con las posiciones y las velocidades del cometa
+'''
+def RK4_singlevector(ti,tf,n,state):
+  h=(tf-ti)/n
+
+  xlis = np.zeros(n)
+  ylis = np.zeros(n)
+  xlis[0] = state[0,0]
+  ylis[0] = state[0,1]
+
+
+  '''
+  Arrays de tamaño 2x2 donde se van a guardar los k del método RK4
+  '''
+  k1=np.zeros([2,2])
+  k2=np.zeros([2,2])
+  k3=np.zeros([2,2])
+  k4=np.zeros([2,2])
+
+  for i in range(1,n):
+    k1[0]= h*state[1,:]
+    k1[1]= h*accel(state[0,:])
+
+    k2[0,:]= h*(state[1,:]+k1[1,:]/2)
+    k2[1,:]= h*accel(state[0,:]+k1[0,:]/2)
+
+    k3[0,:]= h*(state[1,:]+k2[1,:]/2)
+    k3[1,:]= h*accel(state[0,:]+k2[0,:]/2)
+
+    k4[0,:]= h*(state[1,:]+k3[1,:])
+    k4[1,:]= h*accel(state[0,:]+k3[0,:])
+
+    state += (k1+2*k2+2*k3+k4)/6
+    xlis[i], ylis[i] = state[0,0], state[0,1]
+
+  print(k1)
+
+  return xlis,ylis
+
+state=np.array([[xi,yi],[vxi,vyi]])
+
+h=(tf-ti)/n
+plt.figure(figsize=(8, 6), )
+plt.annotate('SOL',xy=(0,0),bbox=dict(boxstyle="circle",fc="y"))
+xlista,ylista=RK4_singlevector(ti,tf,n,state)
+plt.plot(xlista[::10],ylista[::10]) # Para graficar solo utilizo cada 10 datos
+
+plt.show()
+
+
+#siguiente modulo
+
+import math
+import numpy as np
+import matplotlib.pyplot as plt
+
+xi = 26.74 #UA
+yi = 0
+vxi = 0
+vyi = 0.105403 #UA/años
+ti = 0
+tf=10
+M=1
+G= 4*(np.pi**2)
+GM =G*M
+state=np.array([[xi,yi],[vxi,vyi]])
+
+k1=np.zeros([2,2])
+k2=np.zeros([2,2])
+k3=np.zeros([2,2])
+k4=np.zeros([2,2])
+
+def RK4_unpaso(state,dt):
+
+  k1[0]= dt*state[1,:]
+  k1[1]= dt*accel(state[0,:])
+
+  k2[0,:]= dt*(state[1,:]+k1[1,:]/2)
+  k2[1,:]= dt*accel(state[0,:]+k1[0,:]/2)
+
+  k3[0,:]= dt*(state[1,:]+k2[1,:]/2)
+  k3[1,:]= dt*accel(state[0,:]+k2[0,:]/2)
+
+  k4[0,:]= dt*(state[1,:]+k3[1,:])
+  k4[1,:]= dt*accel(state[0,:]+k3[0,:])
+
+  state += (k1+2*k2+2*k3+k4)/6
+
+  return state
+
+
+def theta(pos1,pos2,h,epsilon):
+  if -10e-16<h<10e-16:
+    return 1
+  #print(pos1,'------',pos2)
+  d=np.sqrt(((pos1[0]-pos2[0])**2)-((pos1[1]-pos2[1]**2)))/30
+
+  return  d/(h*epsilon)
+
+
+def accel(posarray):
+  r = np.sqrt(posarray.dot(posarray))
+  return - GM*posarray/r**3
+
+def RK4_singlevector(ti,tf,n,state,e):
+  h=(tf-ti)/n
+  t=ti
+  i=0
+  funciona=True
+  xlis = np.zeros(1)
+  ylis = np.zeros(1)
+  xlis[0] = state[0,0]
+  ylis[0] = state[0,1]
+
+  state1=np.copy(state)
+  state2=np.copy(state)
+  print(state1,'====')
+  while funciona:
+    state1=RK4_unpaso(state,h)
+    print(state1,'#########')
+    state1+=RK4_unpaso(state1,h)
+
+    state2=RK4_unpaso(state,2*h)
+    #print(state2)
+    the=theta(state1[0],state2[0],h,e)
+    i+=1
+    #print(the,i)
+
+
+  return xlis,ylis
+n=1000000
+epsilon=0.0001
+xlista,ylista=RK4_singlevector(ti,tf,n,state,epsilon)
+plt.plot(xlista[::10],ylista[::10]) # Para graficar solo utilizo cada 10 datos
+
+xlis = np.zeros(1)
+print(xlis[0])
+
+#siguiente modulo
+
+import numpy as np
+import matplotlib.pyplot as plt
+#Set parameters:
+
+tiempo= 100   # Cantida de años que se ban a computar
+N =10000*tiempo
+dt = tiempo/(N)                 # Paso, la cantidad de años sobre la cantidad de pasos
+mu = 4 * np.pi**2           # mu=4pi^2 is the Gravitational Parameter: mu = GM where G=6.67e-11 is the Universal Gravitational Constant and M is the mass of the body
+
+masat=3.0027e-6             #masa de la tierra en masas solares
+#masat=1
+#Create an array, for all variables, of size N with all entries equal to zero:
+x = np.zeros((N,))
+y = np.zeros((N,))
+vx = np.zeros((N,))
+vy = np.zeros((N,))
+
+
+# Initial Conditions:
+x[0] = 0.983302765685688                   # (x0 = r, y0 = 0) in AU
+vy[0] = 6.38465526     # (vx0 = 0, v_y0 = sqrt(mu/r)) AU/yr,
+vx[0] = 0  # corrected for time -dt/2
+
+
+#Implement Verlet Algorithm:
+for k in range(0,N-1):
+    r = (x[k]**2+y[k]**2)**0.5
+    vx[k+1] = vx[k] - (mu*x[k]) / (r**3)*dt
+    vy[k+1] = vy[k] - (mu*y[k]) / (r**3)*dt
+
+    x [k+1] = x[k] + vx[k+1]*dt
+    y [k+1] = y[k] + vy[k+1]*dt
+
+#Plot:
+plt.plot(x, y)
+plt.title ('Circular Orbit of Earth')
+# plt.xlim([0.98,1.01])
+# plt.ylim([-0.25,0.25])
+plt.xlabel ('x')
+plt.ylabel ('y')
+plt.axis('equal')
+plt.show()
+
+#siguiente modulo
+
+import numpy as np
+import matplotlib.pyplot as plt
+#Set parameters:
+
+tiempo= 10   # Cantidad de años que se van a computar
+N =10000*tiempo
+dt = tiempo/(N)                 # Paso, la cantidad de años sobre la cantidad de pasos
+mu = 4 * np.pi**2           # Es la constante de gravedad GM
+
+masat=3.0027e-6             #masa de la tierra en masas solares
+'''
+Aqui creamos las listas de la informacion que vamos a guardar, las posiciones, las velocidades y las energias de cada punto
+'''
+x = np.zeros((N,))
+y = np.zeros((N,))
+vx = np.zeros((N,))
+vy = np.zeros((N,))
+energiak=np.zeros((N,))
+energiap=np.zeros((N,))
+t=np.arange(N-1) #creamos un array para poder graficar las energias
+
+
+# condiciones iniciales dados en forma de UA y UA/años
+x[0] = 0.983302765685688
+vy[0] = 6.38465526
+vx[0] = 0
+
+
+#Algorimo de integracion simplectico
+for k in range(0,N-1):
+    r = np.sqrt(x[k]**2+y[k]**2)
+    vx[k+1] = vx[k] - (mu*x[k]) / (r**3)*dt
+    vy[k+1] = vy[k] - (mu*y[k]) / (r**3)*dt
+
+    x [k+1] = x[k] + vx[k+1]*dt
+    y [k+1] = y[k] + vy[k+1]*dt
+
+    energiap[k]=-(masat*mu)/r
+    energiak[k]=(1/2)*(masat)*(vx[k+1]**2+vy[k+1]**2)
+
+
+energiak=np.delete(energiak,N-1)
+energiap=np.delete(energiap,N-1)
+plt.plot(t,energiap)
+plt.plot(t,energiak)
+plt.plot(t,energiak+energiap)
+plt.title ('Energia a lo largo de los pasos')
+
+plt.xlabel ('x')
+plt.ylabel ('y')
+plt.show()
+
+#siguiente modelo
+
+plt.plot(t,energiak+energiap)
+plt.ylim([-0.000059356,-0.000059352])
+
+import numpy as np
+import matplotlib.pyplot as plt
+#Set parameters:
+
+tiempo= 248  # Cantidad de años que se van a computar
+N =10000*tiempo
+dt = tiempo/(N)                 # Paso, la cantidad de años sobre la cantidad de pasos
+mu = 4 * np.pi**2           # mu=4pi^2 is the Gravitational Parameter: mu = GM where G=6.67e-11 is the Universal Gravitational Constant and M is the mass of the body
+
+
+#masat=1
+#Create an array, for all variables, of size N with all entries equal to zero:
+x = np.zeros((N,))
+y = np.zeros((N,))
+vx = np.zeros((N,))
+vy = np.zeros((N,))
+
+
+# Initial Conditions:
+x[0] = 29.6577540107                  # (x0 = r, y0 = 0) in AU
+vy[0] = 1.29043001668     # (vx0 = 0, v_y0 = sqrt(mu/r)) AU/yr,
+vx[0] = 0  # corrected for time -dt/2
+
+
+#Implement Verlet Algorithm:
+for k in range(0,N-1):
+    r = (x[k]**2+y[k]**2)**0.5
+    vx[k+1] = vx[k] - (mu*x[k]) / (r**3)*dt
+    vy[k+1] = vy[k] - (mu*y[k]) / (r**3)*dt
+
+    x [k+1] = x[k] + vx[k+1]*dt
+    y [k+1] = y[k] + vy[k+1]*dt
+
+#Plot:
+
+plt.title ('Orbita pluton')
+plt.plot(x,y,'.',markersize=0.3,linewidth=None,markerfacecolor='black')
+plt.annotate('SOL',xy=(0,0),bbox=dict(boxstyle="circle",fc="y"))
+plt.xlim([-50,50])
+plt.ylim([-50,50])
+plt.grid(True)
+plt.legend()
+plt.show()
+
+#modulo siguiente
+
+import numpy as np
+import matplotlib.pyplot as plt
+import mpl_toolkits.mplot3d as Axes3D
+
+inicial_condition = "sun_earth.txt"
+(x,y,z,vx,vy,vz,mass) = np.loadtxt(inicial_condition, unpack = True)
+
+x = x/1.495e11
+y = y/1.495e11
+z = z/1.495e11
+vx = vx*3.154e7/1.495e11
+vy = vy*3.154e7/1.495e11
+vz = vz*3.154e7/1.495e11
+mass = mass/1.988e30
+
+G = 4.*np.pi**2
+
+ti = 0
+tf = 100
+n = 20000
+
+#y = linspace(x1,x2,n) genera n puntos. El espacio entre los puntos es (x2-x1)/(n-1), es decir, h
+
+t_grilla = np.linspace(ti, tf, n)
+
+h = (tf - ti)/n
+
+N = len(mass)
+
+X = np.zeros([n, N, 6])
+
+X[0,:,0] = x
+X[0,:,1] = y
+X[0,:,2] = z
+X[0,:,3] = vx
+X[0,:,4] = vy
+X[0,:,5] = vz
+
+def accel(ti, X0):
+
+    X1 = np.zeros(X0.shape)
+
+    X1[:,0:3] = X0[:,3:]
+
+    for i in range(0,N):
+
+        particles_distance = X0[i,0:3] - X0[:,0:3]
+
+        r = np.sqrt(np.sum( particles_distance*particles_distance,axis=1))
+
+        r[i] = 1
+
+        X1[i,3] = -G * np.sum( particles_distance[:,0] * mass/(r**3))
+
+        X1[i,4] = -G * np.sum( particles_distance[:,1] * mass/(r**3))
+
+        X1[i,5] = -G * np.sum( particles_distance[:,2] * mass/(r**3))
+
+    return X1
+
+def RK4(h, ti, X0):
+
+    k1 = h*accel(ti, X0)
+    k2 = h*accel(ti + h/2., X0 + k1/2.)
+    k3 = h*accel(ti + h/2., X0 + k2/2.)
+    k4 = h*accel(ti + h, X0 + k3)
+    X1 = X0 + (k1 + 2.*k2 + 2.*k3 + k4)/6.
+    return X1
+
+
+for i in range(n-1):
+  X[i+1] = RK4(h, t_grilla[i], X[i])
+
+lim = max(abs(np.amax(X[:,:,0:3])), abs(np.amin(X[:,:,0:3])))*(1+0.1)
+
+fig = plt.figure(figsize=(10,7))
+ax = fig.add_subplot(projection='3d')
+ax.plot(X[:,0,0],X[:,0,1],X[:,0,2], label='SOL')
+ax.plot(X[:,1,0],X[:,1,1],X[:,1,2], label='TIERRA')
+ax.set_xlabel('x')
+ax.set_ylabel('y')
+ax.set_zlabel('z')
+ax.set_xlim3d(-lim, lim)
+ax.set_ylim3d(-lim, lim)
+ax.set_zlim3d(-lim, lim)
+ax.legend()
+plt.show()
+
+def KE(X0):
+
+     (x,y,z,vx,vy,vz) = X0.transpose()
+
+     v2 = vx**2+vy**2+vz**2
+
+     KE = 0.5*np.sum(np.sum(mass*v2))
+
+     return  KE;
+
+def PE(X0):
+    PE = 0.
+    for i in range(0,N):
+      r = np.sqrt((x[i] - x)**2 + (y[i] - y)**2 + (z[i] - z)**2)
+      r[i] = 1e300
+      PE = -G * np.sum(mass[i] * mass/r)
+
+    return PE;
+
+def E(PE,KE):
+    E_Total = KE + PE
+
+    return  E_Total;
+
+energy = np.zeros(35000)
+K_energy = np.zeros(35000)
+P_energy = np.zeros(35000)
+energy[0] = E(PE(X[0]),KE(X[0]))
+K_energy[0] = KE(X[0])
+P_energy[0] = PE(X[0])
+
+for i in range(n-1):
+  energy[i+1] = E(PE(X[i]),KE(X[i]))
+  K_energy[i+1] = KE(X[i])
+  P_energy[i+1] = PE(X[i])
+
+  t = np.linspace(0, 100, 35000)
+
+fig, ax = plt.subplots( figsize=(10,5))
+
+ax.plot(t, energy, label=f'E')
+ax.plot(t, K_energy, label=f'KE')
+ax.plot(t, P_energy, label=f'PE')
+ax.set_title('Energia vs Tiempo')
+ax.set_xlabel(r'$t$')
+ax.set_ylabel(r'$E$')
+ax.legend()
+
+plt.show()
+
+condiciones_iniciales = "S0stars.txt"
+(x,y,z,vx,vy,vz,mass) = np.loadtxt(condiciones_iniciales, unpack = True)
+
+
+x = x
+y = y
+z = z
+vx = vx
+vy = vy
+vz = vz
+mass = mass
+
+ti = 0
+tf = 100
+n = 40000
+
+#y = linspace(x1,x2,n) genera n puntos. El espacio entre los puntos es (x2-x1)/(n-1), es decir, h
+
+t_grilla = np.linspace(ti, tf, n)
+
+h = (tf - ti)/n
+
+N = len(mass)
+
+X = np.zeros([n, N, 6])
+
+G = 4.*np.pi**2
+
+X[0,:,0] = x
+X[0,:,1] = y
+X[0,:,2] = z
+X[0,:,3] = vx
+X[0,:,4] = vy
+X[0,:,5] = vz
+
+for i in range(n-1):
+  X[i+1] = RK4(h, t_grilla[i], X[i])
+
+xmin = np.amin(x)
+xmax = np.amax(x)
+ymin = np.amin(y)
+ymax = np.amax(y)
+zmin = np.amin(z)
+zmax = np.amax(z)
+rmax = 2.5*max(abs(xmin),abs(xmax),abs(ymin),abs(ymax),abs(zmin),abs(zmax))
+
+
+fig = plt.figure(figsize=(10,7))
+ax = fig.add_subplot(projection='3d')
+ax.plot(X[:,0,0],X[:,0,1],X[:,0,2], color=('red'), label='SgrA')
+
+for i in range(1,len(mass)):
+  ax.plot(X[:,i,0],X[:,i,1],X[:,i,2], color=('green'), label=f' {i}')
+ax.set_xlabel('x')
+ax.set_ylabel('y')
+ax.set_zlabel('z')
+ax.legend()
+plt.show()
+
